@@ -33,16 +33,23 @@ jobs:
         mkdir -p FitNesseRoot/RecentChanges
         mkdir -p FitNesseRoot/ErrorLogs
 
+    - name: Download FitNesse standalone JAR
+      run: |
+        ./mvnw dependency:copy -Dartifact=org.fitnesse:fitnesse:20240707:jar -DoutputDirectory=.
+
+    - name: Set up classpath
+      run: |
+        echo "target/classes:target/test-classes" > fitnesse-classpath.txt
+
     - name: Start FitNesse server in background
       run: |
-        nohup ./mvnw exec:java -Dexec.mainClass="fitnesseMain.FitNesseMain" \
-          -Dexec.args="-p 8080 -e 0 -d ." \
-          -Dexec.classpathScope=test > fitnesse.log 2>&1 &
+        nohup java -cp "fitnesse-20240707.jar:target/classes:target/test-classes" \
+          fitnesseMain.FitNesseMain -p 8080 -e 0 > fitnesse.log 2>&1 &
         echo $! > fitnesse.pid
         echo "FitNesse server started with PID $(cat fitnesse.pid)"
         sleep 5
-        echo "=== Initial FitNesse Log (first 20 lines) ==="
-        head -20 fitnesse.log || echo "Log file not created yet"
+        echo "=== Initial FitNesse Log (first 30 lines) ==="
+        head -30 fitnesse.log || echo "Log file not created yet"
 
     - name: Wait for FitNesse to be ready
       run: |
