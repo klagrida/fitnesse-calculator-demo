@@ -77,6 +77,7 @@ jobs:
         head -30 fitnesse.log || echo "Log file not created yet"
 
     - name: Wait for FitNesse to be ready
+      shell: bash
       run: |
         echo "Waiting for FitNesse to start..."
         for i in {1..60}; do
@@ -97,12 +98,14 @@ jobs:
         exit 1
 
     - name: Run FitNesse test suite
+      shell: bash
       run: |
         # Run the test suite and capture the results
         curl -f --http0.9 "http://localhost:8080/CalculatorTests?suite&format=text" > test-results.txt
         cat test-results.txt
 
     - name: Check test results
+      shell: bash
       run: |
         # Check if tests passed by looking for failure indicators
         if grep -q "0 Failures" test-results.txt; then
@@ -128,6 +131,7 @@ jobs:
 
     - name: Generate test summary
       if: always()
+      shell: bash
       run: |
         echo "## FitNesse Test Results (${{ matrix.os }})" >> $GITHUB_STEP_SUMMARY
         echo '```' >> $GITHUB_STEP_SUMMARY
@@ -140,6 +144,7 @@ jobs:
 
     - name: Stop FitNesse server
       if: always()
+      shell: bash
       run: |
         if [ -f fitnesse.pid ]; then
           kill $(cat fitnesse.pid) || true
