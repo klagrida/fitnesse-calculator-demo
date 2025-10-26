@@ -25,54 +25,51 @@ jobs:
         distribution: 'temurin'
         cache: maven
 
-    - name: Make Maven wrapper executable (Unix)
+    - name: Make Maven wrapper executable
       if: runner.os != 'Windows'
       run: chmod +x mvnw
 
-    - name: Build project and compile tests (Unix)
-      if: runner.os != 'Windows'
-      run: ./mvnw clean test-compile
-
-    - name: Build project and compile tests (Windows)
-      if: runner.os == 'Windows'
-      run: .\mvnw.cmd clean test-compile
+    - name: Build project and compile tests
+      shell: bash
+      run: |
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          ./mvnw.cmd clean test-compile
+        else
+          ./mvnw clean test-compile
+        fi
 
     - name: Prepare FitNesse directories
+      shell: bash
       run: |
         mkdir -p FitNesseRoot/files
         mkdir -p FitNesseRoot/RecentChanges
         mkdir -p FitNesseRoot/ErrorLogs
 
-    - name: Download FitNesse standalone JAR with dependencies (Unix)
-      if: runner.os != 'Windows'
-      run: |
-        ./mvnw dependency:copy-dependencies -DincludeScope=test -DoutputDirectory=libs
-
-    - name: Download FitNesse standalone JAR with dependencies (Windows)
-      if: runner.os == 'Windows'
-      run: |
-        .\mvnw.cmd dependency:copy-dependencies -DincludeScope=test -DoutputDirectory=libs
-
-    - name: Start FitNesse server in background (Unix)
-      if: runner.os != 'Windows'
-      run: |
-        CLASSPATH="libs/*:target/classes:target/test-classes"
-        nohup java -cp "$CLASSPATH" fitnesseMain.FitNesseMain -p 8080 -e 0 -o > fitnesse.log 2>&1 &
-        echo $! > fitnesse.pid
-        echo "FitNesse server started with PID $(cat fitnesse.pid)"
-        sleep 5
-        echo "=== Initial FitNesse Log (first 30 lines) ==="
-        head -30 fitnesse.log || echo "Log file not created yet"
-
-    - name: Start FitNesse server in background (Windows)
-      if: runner.os == 'Windows'
+    - name: Download FitNesse dependencies
       shell: bash
       run: |
-        CLASSPATH="libs/*;target/classes;target/test-classes"
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          ./mvnw.cmd dependency:copy-dependencies -DincludeScope=test -DoutputDirectory=libs
+        else
+          ./mvnw dependency:copy-dependencies -DincludeScope=test -DoutputDirectory=libs
+        fi
+
+    - name: Start FitNesse server in background
+      shell: bash
+      run: |
+        # Set classpath separator based on OS (Windows uses semicolon, Unix uses colon)
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          CLASSPATH="libs/*;target/classes;target/test-classes"
+          SLEEP_TIME=10
+        else
+          CLASSPATH="libs/*:target/classes:target/test-classes"
+          SLEEP_TIME=5
+        fi
+
         nohup java -cp "$CLASSPATH" fitnesseMain.FitNesseMain -p 8080 -e 0 -o > fitnesse.log 2>&1 &
         echo $! > fitnesse.pid
         echo "FitNesse server started with PID $(cat fitnesse.pid)"
-        sleep 10
+        sleep $SLEEP_TIME
         echo "=== Initial FitNesse Log (first 30 lines) ==="
         head -30 fitnesse.log || echo "Log file not created yet"
 

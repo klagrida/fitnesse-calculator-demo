@@ -181,15 +181,17 @@ mvn test
 
 ## Continuous Integration
 
-This project includes a GitHub Actions workflow that:
+This project includes a GitHub Actions workflow that runs tests on **Ubuntu, Windows, and macOS**:
 
 1. Builds the project on every push/PR to the main branch
 2. Starts FitNesse server
-3. Executes the complete test suite
+3. Executes the complete test suite (36 assertions)
 4. Reports test results
 5. Uploads test artifacts
 
-The workflow configuration is in `.github/workflows/fitnesse-tests.yml`.
+The workflow runs in parallel across all three operating systems to ensure cross-platform compatibility.
+
+Configuration: `.github/workflows/fitnesse-tests.yml`
 
 ### Viewing CI Results
 
