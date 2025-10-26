@@ -9,12 +9,27 @@ import com.example.calculator.Calculator;
 public class CalculatorFixture {
 
     // Input fields that will be set by FitNesse from the test table
-    public double firstNumber;
-    public double secondNumber;
-    public String operation;
+    private double firstNumber;
+    private double secondNumber;
+    private String operation;
 
     // Calculator instance to perform the actual operations
     private Calculator calculator = new Calculator();
+
+    /**
+     * Setter methods for FitNesse Slim to populate test data
+     */
+    public void setFirstNumber(double firstNumber) {
+        this.firstNumber = firstNumber;
+    }
+
+    public void setSecondNumber(double secondNumber) {
+        this.secondNumber = secondNumber;
+    }
+
+    public void setOperation(String operation) {
+        this.operation = operation;
+    }
 
     /**
      * This method is called by FitNesse to get the expected result.

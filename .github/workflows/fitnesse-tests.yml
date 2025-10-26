@@ -24,32 +24,62 @@ jobs:
     - name: Make Maven wrapper executable
       run: chmod +x mvnw
 
-    - name: Build project
-      run: ./mvnw clean compile
+    - name: Build project and compile tests
+      run: ./mvnw clean test-compile
+
+    - name: Prepare FitNesse directories
+      run: |
+        mkdir -p FitNesseRoot/files
+        mkdir -p FitNesseRoot/RecentChanges
+        mkdir -p FitNesseRoot/ErrorLogs
+
+    - name: Download FitNesse standalone JAR with dependencies
+      run: |
+        ./mvnw dependency:copy-dependencies -DincludeScope=test -DoutputDirectory=libs
 
     - name: Start FitNesse server in background
       run: |
-        ./mvnw exec:java -Dexec.mainClass="fitnesseMain.FitNesseMain" \
-          -Dexec.args="-p 8080 -e 0" \
-          -Dexec.classpathScope=test &
-        echo "Waiting for FitNesse to start..."
-        sleep 30
+        CLASSPATH="libs/*:target/classes:target/test-classes"
+        nohup java -cp "$CLASSPATH" fitnesseMain.FitNesseMain -p 8080 -e 0 -o > fitnesse.log 2>&1 &
+        echo $! > fitnesse.pid
+        echo "FitNesse server started with PID $(cat fitnesse.pid)"
+        sleep 5
+        echo "=== Initial FitNesse Log (first 30 lines) ==="
+        head -30 fitnesse.log || echo "Log file not created yet"
 
-    - name: Verify FitNesse is running
+    - name: Wait for FitNesse to be ready
       run: |
-        curl -f http://localhost:8080/ || (echo "FitNesse failed to start" && exit 1)
+        echo "Waiting for FitNesse to start..."
+        for i in {1..60}; do
+          if curl -f -s http://localhost:8080/ > /dev/null 2>&1; then
+            echo "FitNesse is up and running!"
+            exit 0
+          fi
+          if [ $((i % 10)) -eq 0 ]; then
+            echo "=== FitNesse Log (last 10 lines) at attempt $i ==="
+            tail -10 fitnesse.log 2>/dev/null || echo "Log not available"
+          fi
+          echo "Attempt $i/60: FitNesse not ready yet..."
+          sleep 2
+        done
+        echo "FitNesse failed to start within 120 seconds"
+        echo "=== Full FitNesse Log ==="
+        cat fitnesse.log
+        exit 1
 
     - name: Run FitNesse test suite
       run: |
         # Run the test suite and capture the results
-        curl -f "http://localhost:8080/CalculatorTests?suite&format=text" > test-results.txt
+        curl -f --http0.9 "http://localhost:8080/CalculatorTests?suite&format=text" > test-results.txt
         cat test-results.txt
 
     - name: Check test results
       run: |
         # Check if tests passed by looking for failure indicators
-        if grep -q "0 wrong" test-results.txt && ! grep -q "Errors occurred" test-results.txt; then
+        if grep -q "0 Failures" test-results.txt; then
           echo "All tests passed!"
+          echo "Test summary:"
+          grep "Tests," test-results.txt
           exit 0
         else
           echo "Tests failed!"
@@ -62,12 +92,25 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: fitnesse-test-results
-        path: test-results.txt
+        path: |
+          test-results.txt
+          fitnesse.log
 
     - name: Generate test summary
       if: always()
       run: |
         echo "## FitNesse Test Results" >> $GITHUB_STEP_SUMMARY
         echo '```' >> $GITHUB_STEP_SUMMARY
-        tail -20 test-results.txt >> $GITHUB_STEP_SUMMARY
+        if [ -f test-results.txt ]; then
+          tail -20 test-results.txt >> $GITHUB_STEP_SUMMARY
+        else
+          echo "Test results file not found - tests may not have run" >> $GITHUB_STEP_SUMMARY
+        fi
         echo '```' >> $GITHUB_STEP_SUMMARY
+
+    - name: Stop FitNesse server
+      if: always()
+      run: |
+        if [ -f fitnesse.pid ]; then
+          kill $(cat fitnesse.pid) || true
+        fi
