@@ -112,7 +112,9 @@ dist/
 # Test reports
 test-output/
 test-results/
-*.xml
+/target/**/*.xml
+TEST-*.xml
+surefire-reports/*.xml
 
 # Backup files
 *.backup
