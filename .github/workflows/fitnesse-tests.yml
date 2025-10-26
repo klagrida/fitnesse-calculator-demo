@@ -69,14 +69,14 @@ jobs:
       shell: powershell
       run: |
         $classpath = "libs/*;target/classes;target/test-classes"
-        Start-Process -FilePath "java" -ArgumentList "-cp", $classpath, "fitnesseMain.FitNesseMain", "-p", "8080", "-e", "0", "-o" -RedirectStandardOutput "fitnesse.log" -RedirectStandardError "fitnesse-error.log" -NoNewWindow
-        Start-Sleep -Seconds 5
+        # Start FitNesse in background using Start-Job
+        Start-Job -ScriptBlock {
+          param($cp)
+          java -cp $cp fitnesseMain.FitNesseMain -p 8080 -e 0 -o 2>&1 | Tee-Object -FilePath fitnesse.log
+        } -ArgumentList $classpath
+        Start-Sleep -Seconds 10
         Write-Host "=== Initial FitNesse Log (first 30 lines) ==="
         if (Test-Path fitnesse.log) { Get-Content fitnesse.log -Head 30 } else { Write-Host "Log file not created yet" }
-        if (Test-Path fitnesse-error.log) {
-          Write-Host "=== FitNesse Error Log ==="
-          Get-Content fitnesse-error.log
-        }
 
     - name: Wait for FitNesse to be ready (Unix)
       if: runner.os != 'Windows'
@@ -217,5 +217,8 @@ jobs:
       if: always() && runner.os == 'Windows'
       shell: powershell
       run: |
-        # Find and stop java processes running FitNesse
-        Get-Process java -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -like "*fitnesseMain.FitNesseMain*" } | Stop-Process -Force -ErrorAction SilentlyContinue
+        # Stop background jobs
+        Get-Job | Stop-Job -ErrorAction SilentlyContinue
+        Get-Job | Remove-Job -ErrorAction SilentlyContinue
+        # Also kill any remaining java processes running FitNesse
+        Get-Process java -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
