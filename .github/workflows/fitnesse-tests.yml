@@ -66,18 +66,17 @@ jobs:
 
     - name: Start FitNesse server in background (Windows)
       if: runner.os == 'Windows'
-      shell: powershell
+      shell: cmd
       run: |
-        $classpath = "libs/*;target/classes;target/test-classes"
-        $logPath = Join-Path (Get-Location) "fitnesse.log"
-        # Start FitNesse in background using Start-Job
-        Start-Job -ScriptBlock {
-          param($cp, $log)
-          java -cp $cp fitnesseMain.FitNesseMain -p 8080 -e 0 -o 2>&1 | Tee-Object -FilePath $log
-        } -ArgumentList $classpath, $logPath
-        Start-Sleep -Seconds 10
-        Write-Host "=== Initial FitNesse Log (first 30 lines) ==="
-        if (Test-Path fitnesse.log) { Get-Content fitnesse.log -Head 30 } else { Write-Host "Log file not created yet" }
+        set CLASSPATH=libs/*;target/classes;target/test-classes
+        start /B java -cp %CLASSPATH% fitnesseMain.FitNesseMain -p 8080 -e 0 -o > fitnesse.log 2>&1
+        timeout /t 10 /nobreak
+        echo === Initial FitNesse Log (first 30 lines) ===
+        if exist fitnesse.log (
+          powershell -Command "Get-Content fitnesse.log -Head 30"
+        ) else (
+          echo Log file not created yet
+        )
 
     - name: Wait for FitNesse to be ready (Unix)
       if: runner.os != 'Windows'
@@ -218,8 +217,5 @@ jobs:
       if: always() && runner.os == 'Windows'
       shell: powershell
       run: |
-        # Stop background jobs
-        Get-Job | Stop-Job -ErrorAction SilentlyContinue
-        Get-Job | Remove-Job -ErrorAction SilentlyContinue
-        # Also kill any remaining java processes running FitNesse
+        # Kill any java processes running FitNesse
         Get-Process java -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
