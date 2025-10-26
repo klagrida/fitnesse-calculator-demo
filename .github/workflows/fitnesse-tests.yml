@@ -70,7 +70,7 @@ jobs:
     - name: Run FitNesse test suite
       run: |
         # Run the test suite and capture the results
-        curl -f "http://localhost:8080/CalculatorTests?suite&format=text" > test-results.txt
+        curl -f --http0.9 "http://localhost:8080/CalculatorTests?suite&format=text" > test-results.txt
         cat test-results.txt
 
     - name: Check test results
