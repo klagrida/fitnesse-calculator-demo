@@ -69,11 +69,12 @@ jobs:
       shell: powershell
       run: |
         $classpath = "libs/*;target/classes;target/test-classes"
+        $logPath = Join-Path (Get-Location) "fitnesse.log"
         # Start FitNesse in background using Start-Job
         Start-Job -ScriptBlock {
-          param($cp)
-          java -cp $cp fitnesseMain.FitNesseMain -p 8080 -e 0 -o 2>&1 | Tee-Object -FilePath fitnesse.log
-        } -ArgumentList $classpath
+          param($cp, $log)
+          java -cp $cp fitnesseMain.FitNesseMain -p 8080 -e 0 -o 2>&1 | Tee-Object -FilePath $log
+        } -ArgumentList $classpath, $logPath
         Start-Sleep -Seconds 10
         Write-Host "=== Initial FitNesse Log (first 30 lines) ==="
         if (Test-Path fitnesse.log) { Get-Content fitnesse.log -Head 30 } else { Write-Host "Log file not created yet" }
