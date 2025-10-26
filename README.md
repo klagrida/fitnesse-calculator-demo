@@ -1,6 +1,6 @@
 # FitNesse Calculator Demo
 
-![FitNesse Tests](https://github.com/yourusername/fitnesse-calculator-demo/workflows/FitNesse%20Tests/badge.svg)
+![FitNesse Tests](https://github.com/klagrida/fitnesse-calculator-demo/workflows/FitNesse%20Tests/badge.svg)
 
 A demonstration project showing FitNesse acceptance testing with a simple calculator application. This project illustrates how to write executable specifications that serve as both documentation and automated tests.
 
