@@ -40,9 +40,9 @@ Tests with decimal/floating-point numbers
 Tests with very large numbers
 
 |Decision:com.example.calculator.fixtures.CalculatorFixture|
-|first number|second number|operation|result?         |
-|1000000     |1000000      |multiply |1000000000000.0 |
-|999999      |1            |add      |1000000.0       |
+|first number|second number|operation|result?  |
+|1000000     |1000000      |multiply |1.0E12   |
+|999999      |1            |add      |1000000.0|
 
 !2 Division by Zero (Error Case)
 This test demonstrates error handling for division by zero.
