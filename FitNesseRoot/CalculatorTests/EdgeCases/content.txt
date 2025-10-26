@@ -9,7 +9,7 @@ This test page verifies that the Calculator handles boundary conditions and spec
 !2 Operations with Zero
 Tests involving zero as an operand
 
-|com.example.calculator.fixtures.CalculatorFixture|
+|Decision:com.example.calculator.fixtures.CalculatorFixture|
 |first number|second number|operation|result?  |
 |0           |5            |add      |5.0      |
 |5           |0            |add      |5.0      |
@@ -20,7 +20,7 @@ Tests involving zero as an operand
 !2 Negative Number Operations
 Tests with negative numbers
 
-|com.example.calculator.fixtures.CalculatorFixture|
+|Decision:com.example.calculator.fixtures.CalculatorFixture|
 |first number|second number|operation|result?  |
 |-5          |-3           |add      |-8.0     |
 |-10         |-2           |multiply |20.0     |
@@ -30,7 +30,7 @@ Tests with negative numbers
 !2 Decimal Number Operations
 Tests with decimal/floating-point numbers
 
-|com.example.calculator.fixtures.CalculatorFixture|
+|Decision:com.example.calculator.fixtures.CalculatorFixture|
 |first number|second number|operation|result?            |
 |5.5         |2.3          |add      |7.8                |
 |10.0        |3.0          |divide   |3.3333333333333335 |
@@ -39,7 +39,7 @@ Tests with decimal/floating-point numbers
 !2 Large Number Operations
 Tests with very large numbers
 
-|com.example.calculator.fixtures.CalculatorFixture|
+|Decision:com.example.calculator.fixtures.CalculatorFixture|
 |first number|second number|operation|result?         |
 |1000000     |1000000      |multiply |1000000000000.0 |
 |999999      |1            |add      |1000000.0       |
@@ -48,7 +48,7 @@ Tests with very large numbers
 This test demonstrates error handling for division by zero.
 The fixture returns an error message instead of throwing an exception.
 
-|com.example.calculator.fixtures.CalculatorFixture|
+|Decision:com.example.calculator.fixtures.CalculatorFixture|
 |first number|second number|operation|result?                      |
 |10          |0            |divide   |error: Cannot divide by zero |
 |100         |0            |divide   |error: Cannot divide by zero |
