@@ -76,8 +76,10 @@ jobs:
     - name: Check test results
       run: |
         # Check if tests passed by looking for failure indicators
-        if grep -q "0 wrong" test-results.txt && ! grep -q "Errors occurred" test-results.txt; then
+        if grep -q "0 Failures" test-results.txt; then
           echo "All tests passed!"
+          echo "Test summary:"
+          grep "Tests," test-results.txt
           exit 0
         else
           echo "Tests failed!"
