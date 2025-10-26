@@ -1,0 +1,28 @@
+!contents -R2 -g -p -f -h
+
+!1 Calculator Test Suite
+This test suite contains acceptance tests for the Calculator application.
+The tests demonstrate FitNesse's ability to test business logic through executable specifications.
+
+!2 Purpose
+These tests verify that the Calculator correctly performs basic arithmetic operations:
+ * Addition
+ * Subtraction
+ * Multiplication
+ * Division
+
+!2 Test Pages
+!see .CalculatorTests.BasicOperations
+!see .CalculatorTests.EdgeCases
+
+!2 Test Configuration
+The tests use the Slim test system and the CalculatorFixture class to bridge between
+FitNesse tables and the Calculator application code.
+
+!define TEST_SYSTEM {slim}
+!path target/classes
+!path target/test-classes
+
+!2 Fixture Information
+All tests use the following fixture:
+!-com.example.calculator.fixtures.CalculatorFixture-!
