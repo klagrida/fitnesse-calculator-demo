@@ -69,20 +69,7 @@ jobs:
 
     - name: Run FitNesse test suite
       run: |
-        # Run EdgeCases test to see what's failing
-        echo "=== Running EdgeCases test with HTML output for debugging ==="
-        curl --http0.9 "http://localhost:8080/CalculatorTests.EdgeCases?test" > test-edge.html
-
-        # Extract test summary
-        echo "=== EdgeCases test summary ==="
-        grep "test-summary" test-edge.html || echo "No summary found"
-
-        # Look for cells with failures (class contains "fail" or shows [expected] actual)
-        echo "=== Looking for failed assertions ==="
-        grep -E "class=\"fail|expected.*actual" test-edge.html | head -30 || echo "No failures found"
-
-        # Run the full suite and capture the results
-        echo "=== Running full test suite ==="
+        # Run the test suite and capture the results
         curl -f --http0.9 "http://localhost:8080/CalculatorTests?suite&format=text" > test-results.txt
         cat test-results.txt
 
@@ -105,7 +92,6 @@ jobs:
         name: fitnesse-test-results
         path: |
           test-results.txt
-          test-edge.html
           fitnesse.log
 
     - name: Generate test summary
