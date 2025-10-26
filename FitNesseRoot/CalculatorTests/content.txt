@@ -20,7 +20,6 @@ The tests use the Slim test system and the CalculatorFixture class to bridge bet
 FitNesse tables and the Calculator application code.
 
 !define TEST_SYSTEM {slim}
-!path libs/*
 !path target/classes
 !path target/test-classes
 

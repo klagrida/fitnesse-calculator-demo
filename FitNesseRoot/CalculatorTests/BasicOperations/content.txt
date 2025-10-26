@@ -10,43 +10,43 @@ on typical inputs.
 !2 Addition Tests
 Tests for the add operation
 
-|Table: com.example.calculator.fixtures.CalculatorFixture|
-|first number|second number|operation|result?                |
-|5           |3            |add      |8.0                    |
-|10          |20           |add      |30.0                   |
-|-5          |3            |add      |-2.0                   |
-|0           |0            |add      |0.0                    |
-|100         |200          |add      |300.0                  |
+|com.example.calculator.fixtures.CalculatorFixture|
+|first number|second number|operation|result?  |
+|5           |3            |add      |8.0      |
+|10          |20           |add      |30.0     |
+|-5          |3            |add      |-2.0     |
+|0           |0            |add      |0.0      |
+|100         |200          |add      |300.0    |
 
 !2 Subtraction Tests
 Tests for the subtract operation
 
-|Table: com.example.calculator.fixtures.CalculatorFixture|
-|first number|second number|operation|result?                |
-|10          |5            |subtract |5.0                    |
-|5           |10           |subtract |-5.0                   |
-|-3          |-2           |subtract |-1.0                   |
-|100         |100          |subtract |0.0                    |
-|50          |25           |subtract |25.0                   |
+|com.example.calculator.fixtures.CalculatorFixture|
+|first number|second number|operation|result?  |
+|10          |5            |subtract |5.0      |
+|5           |10           |subtract |-5.0     |
+|-3          |-2           |subtract |-1.0     |
+|100         |100          |subtract |0.0      |
+|50          |25           |subtract |25.0     |
 
 !2 Multiplication Tests
 Tests for the multiply operation
 
-|Table: com.example.calculator.fixtures.CalculatorFixture|
-|first number|second number|operation|result?                |
-|4           |5            |multiply |20.0                   |
-|-3          |4            |multiply |-12.0                  |
-|0           |100          |multiply |0.0                    |
-|7           |7            |multiply |49.0                   |
-|10          |10           |multiply |100.0                  |
+|com.example.calculator.fixtures.CalculatorFixture|
+|first number|second number|operation|result?  |
+|4           |5            |multiply |20.0     |
+|-3          |4            |multiply |-12.0    |
+|0           |100          |multiply |0.0      |
+|7           |7            |multiply |49.0     |
+|10          |10           |multiply |100.0    |
 
 !2 Division Tests
 Tests for the divide operation
 
-|Table: com.example.calculator.fixtures.CalculatorFixture|
-|first number|second number|operation|result?                |
-|10          |2            |divide   |5.0                    |
-|15          |3            |divide   |5.0                    |
-|100         |4            |divide   |25.0                   |
-|50          |10           |divide   |5.0                    |
-|81          |9            |divide   |9.0                    |
+|com.example.calculator.fixtures.CalculatorFixture|
+|first number|second number|operation|result?  |
+|10          |2            |divide   |5.0      |
+|15          |3            |divide   |5.0      |
+|100         |4            |divide   |25.0     |
+|50          |10           |divide   |5.0      |
+|81          |9            |divide   |9.0      |
