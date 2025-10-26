@@ -66,17 +66,52 @@ jobs:
 
     - name: Start FitNesse server in background (Windows)
       if: runner.os == 'Windows'
-      shell: cmd
+      shell: powershell
       run: |
-        set CLASSPATH=libs/*;target/classes;target/test-classes
-        start /B java -cp %CLASSPATH% fitnesseMain.FitNesseMain -p 8080 -e 0 -o > fitnesse.log 2>&1
-        timeout /t 10 /nobreak
-        echo === Initial FitNesse Log (first 30 lines) ===
-        if exist fitnesse.log (
-          powershell -Command "Get-Content fitnesse.log -Head 30"
-        ) else (
-          echo Log file not created yet
-        )
+        $classpath = "libs/*;target/classes;target/test-classes"
+        # Start process and redirect output
+        $psi = New-Object System.Diagnostics.ProcessStartInfo
+        $psi.FileName = "java"
+        $psi.Arguments = "-cp `"$classpath`" fitnesseMain.FitNesseMain -p 8080 -e 0 -o"
+        $psi.UseShellExecute = $false
+        $psi.RedirectStandardOutput = $true
+        $psi.RedirectStandardError = $true
+        $psi.CreateNoWindow = $true
+
+        $process = New-Object System.Diagnostics.Process
+        $process.StartInfo = $psi
+
+        # Create output file
+        $outFile = [System.IO.StreamWriter]::new("fitnesse.log", $false)
+
+        # Register event handlers to capture output
+        $process.add_OutputDataReceived({
+          param($sender, $e)
+          if ($e.Data) { $outFile.WriteLine($e.Data); $outFile.Flush() }
+        })
+        $process.add_ErrorDataReceived({
+          param($sender, $e)
+          if ($e.Data) { $outFile.WriteLine($e.Data); $outFile.Flush() }
+        })
+
+        # Start the process
+        $process.Start() | Out-Null
+        $process.BeginOutputReadLine()
+        $process.BeginErrorReadLine()
+
+        # Store process ID
+        $process.Id | Out-File -FilePath "fitnesse.pid"
+
+        Start-Sleep -Seconds 10
+        Write-Host "=== Initial FitNesse Log (first 30 lines) ==="
+        if (Test-Path fitnesse.log) {
+          Get-Content fitnesse.log -Head 30 -ErrorAction SilentlyContinue
+        } else {
+          Write-Host "Log file not created yet"
+        }
+
+        # Store file handle globally so it persists
+        $Global:FitNesseLogFile = $outFile
 
     - name: Wait for FitNesse to be ready (Unix)
       if: runner.os != 'Windows'
@@ -217,5 +252,10 @@ jobs:
       if: always() && runner.os == 'Windows'
       shell: powershell
       run: |
-        # Kill any java processes running FitNesse
+        # Stop by PID if available
+        if (Test-Path fitnesse.pid) {
+          $pid = Get-Content fitnesse.pid
+          Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue
+        }
+        # Also kill any remaining java processes
         Get-Process java -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
