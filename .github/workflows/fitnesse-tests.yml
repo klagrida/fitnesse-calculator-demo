@@ -44,7 +44,7 @@ jobs:
     - name: Start FitNesse server in background
       run: |
         nohup java -cp "fitnesse-20240707.jar:target/classes:target/test-classes" \
-          fitnesseMain.FitNesseMain -p 8080 -e 0 > fitnesse.log 2>&1 &
+          fitnesseMain.FitNesseMain -p 8080 -e 0 -o > fitnesse.log 2>&1 &
         echo $! > fitnesse.pid
         echo "FitNesse server started with PID $(cat fitnesse.pid)"
         sleep 5
