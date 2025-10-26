@@ -69,10 +69,14 @@ jobs:
       shell: powershell
       run: |
         $classpath = "libs/*;target/classes;target/test-classes"
-        Start-Process -NoNewWindow -RedirectStandardOutput fitnesse.log -RedirectStandardError fitnesse.log java -ArgumentList "-cp", $classpath, "fitnesseMain.FitNesseMain", "-p", "8080", "-e", "0", "-o"
+        Start-Process -FilePath "java" -ArgumentList "-cp", $classpath, "fitnesseMain.FitNesseMain", "-p", "8080", "-e", "0", "-o" -RedirectStandardOutput "fitnesse.log" -RedirectStandardError "fitnesse-error.log" -NoNewWindow
         Start-Sleep -Seconds 5
         Write-Host "=== Initial FitNesse Log (first 30 lines) ==="
         if (Test-Path fitnesse.log) { Get-Content fitnesse.log -Head 30 } else { Write-Host "Log file not created yet" }
+        if (Test-Path fitnesse-error.log) {
+          Write-Host "=== FitNesse Error Log ==="
+          Get-Content fitnesse-error.log
+        }
 
     - name: Wait for FitNesse to be ready (Unix)
       if: runner.os != 'Windows'
@@ -175,6 +179,7 @@ jobs:
         path: |
           test-results.txt
           fitnesse.log
+          fitnesse-error.log
 
     - name: Generate test summary (Unix)
       if: always() && runner.os != 'Windows'
