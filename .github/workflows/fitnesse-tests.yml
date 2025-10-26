@@ -66,55 +66,17 @@ jobs:
 
     - name: Start FitNesse server in background (Windows)
       if: runner.os == 'Windows'
-      shell: powershell
+      shell: bash
       run: |
-        $classpath = "libs/*;target/classes;target/test-classes"
-        # Start process and redirect output
-        $psi = New-Object System.Diagnostics.ProcessStartInfo
-        $psi.FileName = "java"
-        $psi.Arguments = "-cp `"$classpath`" fitnesseMain.FitNesseMain -p 8080 -e 0 -o"
-        $psi.UseShellExecute = $false
-        $psi.RedirectStandardOutput = $true
-        $psi.RedirectStandardError = $true
-        $psi.CreateNoWindow = $true
+        CLASSPATH="libs/*;target/classes;target/test-classes"
+        nohup java -cp "$CLASSPATH" fitnesseMain.FitNesseMain -p 8080 -e 0 -o > fitnesse.log 2>&1 &
+        echo $! > fitnesse.pid
+        echo "FitNesse server started with PID $(cat fitnesse.pid)"
+        sleep 10
+        echo "=== Initial FitNesse Log (first 30 lines) ==="
+        head -30 fitnesse.log || echo "Log file not created yet"
 
-        $process = New-Object System.Diagnostics.Process
-        $process.StartInfo = $psi
-
-        # Create output file
-        $outFile = [System.IO.StreamWriter]::new("fitnesse.log", $false)
-
-        # Register event handlers to capture output
-        $process.add_OutputDataReceived({
-          param($sender, $e)
-          if ($e.Data) { $outFile.WriteLine($e.Data); $outFile.Flush() }
-        })
-        $process.add_ErrorDataReceived({
-          param($sender, $e)
-          if ($e.Data) { $outFile.WriteLine($e.Data); $outFile.Flush() }
-        })
-
-        # Start the process
-        $process.Start() | Out-Null
-        $process.BeginOutputReadLine()
-        $process.BeginErrorReadLine()
-
-        # Store process ID
-        $process.Id | Out-File -FilePath "fitnesse.pid"
-
-        Start-Sleep -Seconds 10
-        Write-Host "=== Initial FitNesse Log (first 30 lines) ==="
-        if (Test-Path fitnesse.log) {
-          Get-Content fitnesse.log -Head 30 -ErrorAction SilentlyContinue
-        } else {
-          Write-Host "Log file not created yet"
-        }
-
-        # Store file handle globally so it persists
-        $Global:FitNesseLogFile = $outFile
-
-    - name: Wait for FitNesse to be ready (Unix)
-      if: runner.os != 'Windows'
+    - name: Wait for FitNesse to be ready
       run: |
         echo "Waiting for FitNesse to start..."
         for i in {1..60}; do
@@ -134,48 +96,13 @@ jobs:
         cat fitnesse.log
         exit 1
 
-    - name: Wait for FitNesse to be ready (Windows)
-      if: runner.os == 'Windows'
-      shell: powershell
-      run: |
-        Write-Host "Waiting for FitNesse to start..."
-        for ($i = 1; $i -le 60; $i++) {
-          try {
-            $response = Invoke-WebRequest -Uri http://localhost:8080/ -UseBasicParsing -TimeoutSec 2 -ErrorAction SilentlyContinue
-            if ($response.StatusCode -eq 200) {
-              Write-Host "FitNesse is up and running!"
-              exit 0
-            }
-          } catch {}
-          if ($i % 10 -eq 0) {
-            Write-Host "=== FitNesse Log (last 10 lines) at attempt $i ==="
-            if (Test-Path fitnesse.log) { Get-Content fitnesse.log -Tail 10 } else { Write-Host "Log not available" }
-          }
-          Write-Host "Attempt $i/60: FitNesse not ready yet..."
-          Start-Sleep -Seconds 2
-        }
-        Write-Host "FitNesse failed to start within 120 seconds"
-        Write-Host "=== Full FitNesse Log ==="
-        Get-Content fitnesse.log
-        exit 1
-
-    - name: Run FitNesse test suite (Unix)
-      if: runner.os != 'Windows'
+    - name: Run FitNesse test suite
       run: |
         # Run the test suite and capture the results
         curl -f --http0.9 "http://localhost:8080/CalculatorTests?suite&format=text" > test-results.txt
         cat test-results.txt
 
-    - name: Run FitNesse test suite (Windows)
-      if: runner.os == 'Windows'
-      shell: powershell
-      run: |
-        # Run the test suite and capture the results
-        Invoke-WebRequest -Uri "http://localhost:8080/CalculatorTests?suite&format=text" -OutFile test-results.txt
-        Get-Content test-results.txt
-
-    - name: Check test results (Unix)
-      if: runner.os != 'Windows'
+    - name: Check test results
       run: |
         # Check if tests passed by looking for failure indicators
         if grep -q "0 Failures" test-results.txt; then
@@ -189,23 +116,6 @@ jobs:
           exit 1
         fi
 
-    - name: Check test results (Windows)
-      if: runner.os == 'Windows'
-      shell: powershell
-      run: |
-        # Check if tests passed by looking for failure indicators
-        $content = Get-Content test-results.txt -Raw
-        if ($content -match "0 Failures") {
-          Write-Host "All tests passed!"
-          Write-Host "Test summary:"
-          Select-String -Path test-results.txt -Pattern "Tests,"
-          exit 0
-        } else {
-          Write-Host "Tests failed!"
-          Get-Content test-results.txt
-          exit 1
-        }
-
     - name: Upload test results
       if: always()
       uses: actions/upload-artifact@v4
@@ -216,8 +126,8 @@ jobs:
           fitnesse.log
           fitnesse-error.log
 
-    - name: Generate test summary (Unix)
-      if: always() && runner.os != 'Windows'
+    - name: Generate test summary
+      if: always()
       run: |
         echo "## FitNesse Test Results (${{ matrix.os }})" >> $GITHUB_STEP_SUMMARY
         echo '```' >> $GITHUB_STEP_SUMMARY
@@ -228,34 +138,9 @@ jobs:
         fi
         echo '```' >> $GITHUB_STEP_SUMMARY
 
-    - name: Generate test summary (Windows)
-      if: always() && runner.os == 'Windows'
-      shell: powershell
-      run: |
-        Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "## FitNesse Test Results (${{ matrix.os }})"
-        Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value '```'
-        if (Test-Path test-results.txt) {
-          Get-Content test-results.txt -Tail 20 | Add-Content -Path $env:GITHUB_STEP_SUMMARY
-        } else {
-          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "Test results file not found - tests may not have run"
-        }
-        Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value '```'
-
-    - name: Stop FitNesse server (Unix)
-      if: always() && runner.os != 'Windows'
+    - name: Stop FitNesse server
+      if: always()
       run: |
         if [ -f fitnesse.pid ]; then
           kill $(cat fitnesse.pid) || true
         fi
-
-    - name: Stop FitNesse server (Windows)
-      if: always() && runner.os == 'Windows'
-      shell: powershell
-      run: |
-        # Stop by PID if available
-        if (Test-Path fitnesse.pid) {
-          $pid = Get-Content fitnesse.pid
-          Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue
-        }
-        # Also kill any remaining java processes
-        Get-Process java -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
