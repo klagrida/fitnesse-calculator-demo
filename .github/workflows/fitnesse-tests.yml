@@ -69,7 +69,20 @@ jobs:
 
     - name: Run FitNesse test suite
       run: |
-        # Run the test suite and capture the results
+        # Run a single test first to see detailed errors
+        echo "=== Running BasicOperations test with HTML output for debugging ==="
+        curl --http0.9 "http://localhost:8080/CalculatorTests.BasicOperations?test" > test-debug.html
+
+        # Extract error messages from HTML
+        echo "=== Checking for error details ==="
+        grep -i "exception\|error" test-debug.html | head -20 || echo "No exception/error keywords found"
+
+        # Look for the test table results
+        echo "=== Looking for test results ==="
+        grep -A 5 "first number" test-debug.html | head -30 || echo "No test table found"
+
+        # Run the full suite and capture the results
+        echo "=== Running full test suite ==="
         curl -f --http0.9 "http://localhost:8080/CalculatorTests?suite&format=text" > test-results.txt
         cat test-results.txt
 
@@ -92,6 +105,7 @@ jobs:
         name: fitnesse-test-results
         path: |
           test-results.txt
+          test-debug.html
           fitnesse.log
 
     - name: Generate test summary
